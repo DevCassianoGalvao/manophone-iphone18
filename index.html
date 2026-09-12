@@ -447,6 +447,11 @@
           <input type="email" id="f-email" name="E-mail" placeholder="voce@email.com" required>
         </div>
 
+        <div class="field step" id="s-cidade" hidden>
+          <label for="f-cidade">Cidade</label>
+          <input type="text" id="f-cidade" name="Cidade" placeholder="Sua cidade" required>
+        </div>
+
         <div class="field step" id="s-modelo" hidden>
           <label for="f-modelo">Qual dos novos lançamentos você deseja?</label>
           <select id="f-modelo" name="Modelo" required>
@@ -520,6 +525,25 @@
           </select>
         </div>
 
+        <div class="field step" id="s-troca" hidden>
+          <span class="radio-label">Tem outro iPhone para dar como entrada (troca)?</span>
+          <div class="radio-row">
+            <label class="radio">
+              <input type="radio" name="Tem aparelho para troca" value="Sim" id="troca-sim" required>
+              <span>Sim</span>
+            </label>
+            <label class="radio">
+              <input type="radio" name="Tem aparelho para troca" value="Não" id="troca-nao">
+              <span>Não</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="field step cond" data-group="troca" hidden>
+          <label for="f-aparelho">Qual aparelho?</label>
+          <input type="text" id="f-aparelho" name="Aparelho para troca" placeholder="Ex: iPhone 15 Pro 256GB" disabled>
+        </div>
+
         <div class="field step" id="s-submit" hidden>
           <button type="submit" class="submit" id="btn-submit">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -550,7 +574,8 @@
   var form   = document.getElementById('reserva-form');
   var $      = function(id){ return document.getElementById(id); };
   var nome   = $('f-nome'), whats = $('f-whats'), email = $('f-email'),
-      modelo = $('f-modelo');
+      cidade = $('f-cidade'), modelo = $('f-modelo');
+  var trocaSim = $('troca-sim'), trocaNao = $('troca-nao'), aparelho = $('f-aparelho');
   var btn = $('btn-submit'), errorMsg = $('form-error');
   var card = $('form-card'), success = $('form-success');
 
@@ -595,17 +620,25 @@
     setGroup('fold',   v === 'iPhone Fold');
   }
 
+  function atualizarTroca(){
+    setGroup('troca', trocaSim.checked);
+  }
+
   // Divulgação progressiva: cada campo aparece quando o anterior é preenchido.
   function advance(){
     reveal($('s-whats'),  nome.value.trim().length > 1);
     reveal($('s-email'),  digits(whats.value).length >= 10);
-    reveal($('s-modelo'), email.value !== '' && email.checkValidity());
+    reveal($('s-cidade'), email.value !== '' && email.checkValidity());
+    reveal($('s-modelo'), cidade.value.trim().length > 1);
 
     if(modelo.value){ atualizarModelo(); }
 
     var a = activeSelects();
     var escolhaFeita = a.cor && a.arm && a.cor.value && a.arm.value;
-    reveal($('s-submit'), !!modelo.value && !!escolhaFeita);
+    reveal($('s-troca'), !!modelo.value && !!escolhaFeita);
+
+    atualizarTroca();
+    reveal($('s-submit'), trocaSim.checked || trocaNao.checked);
   }
 
   form.addEventListener('input', advance);
@@ -624,9 +657,12 @@
       nome: nome.value,
       whats: whats.value,
       email: email.value,
+      cidade: cidade.value,
       modelo: modelo.value,
       cor: a.cor ? a.cor.value : '',
-      armazenamento: a.arm ? a.arm.value : ''
+      armazenamento: a.arm ? a.arm.value : '',
+      troca: trocaSim.checked ? 'Sim' : (trocaNao.checked ? 'Não' : ''),
+      aparelho: trocaSim.checked ? aparelho.value : ''
     };
 
     fetch(SHEET_URL, {
