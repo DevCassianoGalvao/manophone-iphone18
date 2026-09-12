@@ -429,10 +429,7 @@
     <div class="form-card" id="form-card">
       <form id="reserva-form">
 
-        <!-- FormSubmit (ocultos) -->
-        <input type="hidden" name="_subject" value="Novo Lead - iPhone 18 | Mano Phone">
-        <input type="hidden" name="_template" value="table">
-        <input type="hidden" name="_captcha" value="false">
+        <!-- honeypot anti-spam -->
         <input type="text" name="_honey" style="display:none" tabindex="-1" autocomplete="off">
 
         <div class="field step" id="s-nome">
@@ -557,8 +554,8 @@
   var btn = $('btn-submit'), errorMsg = $('form-error');
   var card = $('form-card'), success = $('form-success');
 
-  // TEMP: e-mail de destino provisório. Trocar pelo e-mail definitivo da Mano Phone.
-  var DESTINO = 'cassianogalvao2020@gmail.com';
+  // URL do Web App do Google Apps Script (Extensões > Apps Script > Implantar > Web App).
+  var SHEET_URL = 'https://script.google.com/macros/s/AKfycbxr6W_j-L9YgtbrhJpoTGBlmk0yg04hsvxvDP6as4OyL4XwE4CNhBkws1ZILRwDmVL1/exec';
 
   $('year').textContent = new Date().getFullYear();
 
@@ -617,18 +614,26 @@
 
   form.addEventListener('submit', function(e){
     e.preventDefault();
+    if(form.querySelector('[name="_honey"]').value){ return; }
     errorMsg.hidden = true;
     btn.disabled = true;
     btn.textContent = 'Enviando...';
 
-    fetch('https://formsubmit.co/ajax/' + DESTINO, {
+    var a = activeSelects();
+    var payload = {
+      nome: nome.value,
+      whats: whats.value,
+      email: email.value,
+      modelo: modelo.value,
+      cor: a.cor ? a.cor.value : '',
+      armazenamento: a.arm ? a.arm.value : ''
+    };
+
+    fetch(SHEET_URL, {
       method: 'POST',
-      headers: { 'Accept': 'application/json' },
-      body: new FormData(form)
-    })
-    .then(function(resp){
-      if(!resp.ok){ throw new Error('Falha no envio'); }
-      return resp.json();
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
     })
     .then(function(){
       card.hidden = true;
